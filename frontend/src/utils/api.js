@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+const API_BASE = "https://onrender.com";
 
 /**
  * Запускает генерацию презентации и стримит события через SSE (fetch + ReadableStream,
