@@ -229,13 +229,13 @@ async def generate_slide_content(
     raw = await _call_gigachat(prompt, temperature=0.7)
     raw = _extract_json(raw)
 
-    try:
+        try:
         item = json.loads(raw)
     except json.JSONDecodeError as exc:
-    logger.error("RAW GIGACHAT RESPONSE:")
-    logger.error(raw)
-    logger.exception(exc)
-    raise GenerationError("AI вернул некорректный JSON для слайда.") from exc
+        logger.error("RAW GIGACHAT RESPONSE:")
+        logger.error(raw)
+        logger.exception(exc)
+        raise GenerationError("AI вернул некорректный JSON для слайда.") from exc
 
     return SlideContent(
         title=item.get("title", outline_item.title),
