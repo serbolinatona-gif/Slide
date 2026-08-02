@@ -1,4 +1,4 @@
-const API_BASE = "https://onrender.com";
+const API_BASE = "https://slideforge-backend-hz8k.onrender.com";
 
 /**
  * Запускает генерацию презентации и стримит события через SSE (fetch + ReadableStream,
