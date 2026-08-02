@@ -36,7 +36,7 @@ app = FastAPI(title="SlideForge API", version="1.0.0")
 
 # ИСПРАВЛЕНО НАПРЯМУЮ: Жестко прописываем адреса, чтобы обойти ошибку блокировки CORS в браузере
 ALLOWED_ORIGINS = [
-    "https://onrender.com",
+    "https://slideforge-frontend.onrender.com",
     "http://localhost:5173",
     "http://localhost:3000"
 ]
