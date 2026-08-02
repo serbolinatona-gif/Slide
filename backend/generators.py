@@ -208,38 +208,103 @@ async def generate_slide_content(
     with_notes: bool = False,
 ) -> SlideContent:
     """Этап 2: наполнение конкретного слайда."""
+
     lang_instruction = "русском" if language == "ru" else "английском"
+
     notes_instruction = (
         'Добавь поле "speaker_notes" (2-3 предложения заметок для докладчика).'
         if with_notes
         else 'Поле "speaker_notes" оставь пустой строкой.'
     )
+
     prompt = (
         f"Контекст: презентация на тему '{topic}' в стиле '{style}'. "
         f"Раскрой слайд с заголовком '{outline_item.title}' и тезисами {outline_item.key_points} "
         f"на {lang_instruction} языке. "
-        'Верни строго JSON-объект вида {"title": "заголовок до 8 слов", '
-        '"bullets": ["пункт 1", "пункт 2", "пункт 3"], '
-        '"image_keywords": ["ключевое слово 1", "ключевое слово 2"], '
-        '"speaker_notes": "..."}. '
-        f"{notes_instruction} Пунктов должно быть 3-5, каждый короткий (до 12 слов). "
-        "Ключевые слова для поиска изображений — на английском, конкретные и визуальные. "
-        "Без markdown, только валидный JSON."
+
+        "Верни ТОЛЬКО один JSON-объект следующего вида:\n"
+        "{\n"
+        '\"title\": \"Заголовок слайда\",\n'
+        '\"bullets\": [\"пункт 1\", \"пункт 2\", \"пункт 3\"],\n'
+        '\"image_keywords\": [\"cat\", \"animal\"],\n'
+        '\"speaker_notes\": \"\"\n'
+        "}\n"
+
+        f"{notes_instruction} "
+        "Нельзя возвращать массив. "
+        "Нельзя писать текст до или после JSON. "
+        "Без markdown."
     )
-    raw = await _call_gigachat(prompt, temperature=0.7)
+
+    raw = await _call_gigachat(prompt, temperature=0.3)
+
+    logger.info("RAW BEFORE PARSE:")
+    logger.info(raw)
+
     raw = _extract_json(raw)
 
     try:
         item = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        logger.error("RAW GIGACHAT RESPONSE:")
-        logger.error(raw)
-        logger.exception(exc)
-        raise GenerationError("AI вернул некорректный JSON для слайда.") from exc
+
+    except json.JSONDecodeError:
+        logger.warning("Попытка восстановления JSON слайда")
+
+        # Восстановление частого бага GigaChat:
+        # ["bullet1","bullet2"], "image_keywords":[...]
+        try:
+            bullets_match = re.search(
+                r'\[(.*?)\]\s*,\s*"image_keywords"',
+                raw,
+                re.DOTALL
+            )
+
+            images_match = re.search(
+                r'"image_keywords"\s*:\s*(\[.*?\])',
+                raw,
+                re.DOTALL
+            )
+
+            bullets = []
+            images = []
+
+            if bullets_match:
+                bullets = json.loads(
+                    "[" + bullets_match.group(1) + "]"
+                )
+
+            if images_match:
+                images = json.loads(
+                    images_match.group(1)
+                )
+
+            item = {
+                "title": outline_item.title,
+                "bullets": bullets,
+                "image_keywords": images,
+                "speaker_notes": ""
+            }
+
+        except Exception as exc:
+            logger.error("RAW GIGACHAT RESPONSE:")
+            logger.error(raw)
+            logger.exception(exc)
+
+            raise GenerationError(
+                "AI вернул некорректный JSON для слайда."
+            ) from exc
+
 
     return SlideContent(
         title=item.get("title", outline_item.title),
-        bullets=item.get("bullets", outline_item.key_points),
-        image_keywords=item.get("image_keywords", [])[:3],
-        speaker_notes=item.get("speaker_notes") or None,
+        bullets=item.get(
+            "bullets",
+            outline_item.key_points
+        ),
+        image_keywords=item.get(
+            "image_keywords",
+            []
+        )[:3],
+        speaker_notes=item.get(
+            "speaker_notes"
+        ) or None,
     )
