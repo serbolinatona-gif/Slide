@@ -9,7 +9,7 @@ services:
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: GIGACHAT_AUTH_KEY
-        sync: MDE5ZmMzNmQtZWRjNi03NTdiLThhNTctMzgyODJlNzQ4MzRmOjE1MmI0ZjEyLTUwMzYtNDhjYS04NGUwLTRhN2MyOTE0OWNiYQ==
+        sync: false
       - key: GIGACHAT_SCOPE
         value: GIGACHAT_API_PERS
       - key: GIGACHAT_MODEL
