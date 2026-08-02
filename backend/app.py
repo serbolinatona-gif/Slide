@@ -34,7 +34,12 @@ logger = logging.getLogger("slideforge.app")
 
 app = FastAPI(title="SlideForge API", version="1.0.0")
 
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+# ИСПРАВЛЕНО НАПРЯМУЮ: Жестко прописываем адреса, чтобы обойти ошибку блокировки CORS в браузере
+ALLOWED_ORIGINS = [
+    "https://onrender.com",
+    "http://localhost:5173",
+    "http://localhost:3000"
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,7 +50,6 @@ app.add_middleware(
 )
 
 # In-memory хранилище готовых презентаций: { id: {html, pptx_bytes, title, created_at} }
-# Для продакшна с несколькими воркерами замени на Redis/БД.
 PRESENTATIONS: Dict[str, dict] = {}
 
 VALID_STYLES = {"minimal", "academic", "creative", "corporate", "dark"}
