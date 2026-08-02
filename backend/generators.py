@@ -243,10 +243,25 @@ async def generate_slide_content(
 
     raw = _extract_json(raw)
 
-    try:
+        try:
         item = json.loads(raw)
 
-    except json.JSONDecodeError:
+        # GigaChat иногда возвращает массив вместо объекта
+        if isinstance(item, list):
+            logger.warning("GigaChat вернул список вместо объекта")
+
+            item = {
+                "title": outline_item.title,
+                "bullets": item,
+                "image_keywords": [],
+                "speaker_notes": ""
+            }
+
+        # На всякий случай проверяем тип
+        if not isinstance(item, dict):
+            raise ValueError("Ответ JSON не является объектом")
+
+    except (json.JSONDecodeError, ValueError):
         logger.warning("Попытка восстановления JSON слайда")
 
         # Восстановление частого бага GigaChat:
