@@ -232,8 +232,10 @@ async def generate_slide_content(
     try:
         item = json.loads(raw)
     except json.JSONDecodeError as exc:
-        logger.error("Не удалось распарсить JSON слайда: %s", raw[:500])
-        raise GenerationError("AI вернул некорректный JSON для слайда.") from exc
+    logger.error("RAW GIGACHAT RESPONSE:")
+    logger.error(raw)
+    logger.exception(exc)
+    raise GenerationError("AI вернул некорректный JSON для слайда.") from exc
 
     return SlideContent(
         title=item.get("title", outline_item.title),
